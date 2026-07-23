@@ -1,86 +1,240 @@
 """
 client.py
 
-Client for SOC ML API
+Client for SOC ML Detection API.
 
-Отправляет сетевые признаки
-на ML сервер и получает результат
-детектирования атаки.
+Отправляет характеристики сетевого трафика
+на FastAPI-сервер и получает результат
+классификации сетевой активности.
+
+Проект:
+CICIoT2023 Network Attack Detection
 """
 
 
-import requests
 import json
+import requests
 
+# SERVER SETTINGS
 
-# =====================================================
-# Настройки сервера
-# =====================================================
-
-
-SERVER_URL = "http://127.0.0.1:8000"
+SERVER_URL = (
+    "http://127.0.0.1:8000"
+)
 
 
 PREDICT_ENDPOINT = (
-    SERVER_URL +
-    "/predict"
+
+    SERVER_URL
+
+    + "/predict"
+
 )
 
 
 HEALTH_ENDPOINT = (
-    SERVER_URL +
-    "/health"
+
+    SERVER_URL
+
+    + "/health"
+
 )
 
 
-# =====================================================
-# Проверка сервера
-# =====================================================
+MODEL_INFO_ENDPOINT = (
+
+    SERVER_URL
+
+    + "/model-info"
+
+)
+
+
+# CHECK SERVER
 
 
 def check_server():
 
+    """
+    Проверяет доступность ML-сервера.
+    """
+
     try:
 
         response = requests.get(
-            HEALTH_ENDPOINT
+
+            HEALTH_ENDPOINT,
+
+            timeout=5
+
         )
+
 
         if response.status_code == 200:
 
-            print("[OK] Server available")
+            print(
+
+                "[OK] Server available"
+
+            )
+
 
             print(
+
                 json.dumps(
+
                     response.json(),
+
                     indent=4,
+
                     ensure_ascii=False
+
                 )
+
             )
+
+
+            return True
+
 
         else:
 
             print(
-                "[ERROR]",
+
+                "[ERROR] Server returned:",
+
                 response.status_code
+
             )
+
+
+            return False
+
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+
+            "[ERROR] Server unavailable"
+
+        )
+
+
+        print(
+
+            "Start the server first"
+
+        )
+
+
+        return False
+
+
+    except requests.exceptions.Timeout:
+
+        print(
+
+            "[ERROR] Server timeout"
+
+        )
+
+
+        return False
 
 
     except Exception as e:
 
         print(
-            "[ERROR] Server unavailable:",
+
+            "[ERROR]:",
+
             e
+
         )
 
 
-
-# =====================================================
-# Отправка признаков
-# =====================================================
+        return False
 
 
-def predict_attack(features):
+# GET MODEL INFORMATION
+
+
+def get_model_info():
+
+    """
+    Получает информацию о загруженной модели.
+    """
+
+    try:
+
+        response = requests.get(
+
+            MODEL_INFO_ENDPOINT,
+
+            timeout=5
+
+        )
+
+
+        if response.status_code == 200:
+
+            return response.json()
+
+
+        print(
+
+            "[ERROR] Model info error:",
+
+            response.text
+
+        )
+
+
+        return None
+
+
+    except Exception as e:
+
+        print(
+
+            "[ERROR] Cannot get model info:",
+
+            e
+
+        )
+
+
+        return None
+
+
+# PREDICT ATTACK
+
+
+def predict_attack(
+
+    features
+
+):
+
+    """
+    Отправляет признаки сетевого потока
+    на ML-сервер.
+
+    Parameters
+    ----------
+    features : list[float]
+
+        Признаки сетевого трафика.
+
+        Порядок признаков должен совпадать
+        с порядком признаков при обучении модели.
+
+    Returns
+    -------
+    dict
+
+        Результат предсказания.
+    """
+
 
     payload = {
 
@@ -95,7 +249,9 @@ def predict_attack(features):
 
             PREDICT_ENDPOINT,
 
-            json=payload
+            json=payload,
+
+            timeout=30
 
         )
 
@@ -108,132 +264,321 @@ def predict_attack(features):
         else:
 
             print(
-                "Server error:",
-                response.text
+
+                "[SERVER ERROR]"
+
             )
+
+
+            print(
+
+                "Status code:",
+
+                response.status_code
+
+            )
+
+
+            print(
+
+                "Response:",
+
+                response.text
+
+            )
+
+
+            return None
+
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+
+            "[ERROR] Cannot connect to server"
+
+        )
+
+
+        return None
+
+
+    except requests.exceptions.Timeout:
+
+        print(
+
+            "[ERROR] Request timeout"
+
+        )
+
+
+        return None
 
 
     except Exception as e:
 
         print(
-            "Connection error:",
+
+            "[ERROR] Request failed:",
+
             e
+
         )
 
 
-
-# =====================================================
-# Красивый вывод результата
-# =====================================================
+        return None
 
 
-def print_result(result):
+# PRINT RESULT
+
+
+
+def print_result(
+
+    result
+
+):
+
+    """
+    Красиво выводит результат классификации.
+    """
+
 
     if result is None:
 
         return
 
 
-    print("\n========== RESULT ==========")
+    print(
+
+        "\n========== SOC ML RESULT =========="
+
+    )
 
 
     print(
+
         "Prediction:",
+
         result.get(
+
             "prediction"
+
         )
+
+    )
+
+
+    print(
+
+        "Class ID:",
+
+        result.get(
+
+            "class_id"
+
+        )
+
     )
 
 
     confidence = result.get(
+
         "confidence"
+
     )
 
 
-    if confidence:
+    if confidence is not None:
 
         print(
+
             "Confidence:",
+
             round(
+
                 confidence * 100,
+
                 2
+
             ),
+
             "%"
+
         )
-
-
-    probabilities = result.get(
-        "probabilities"
-    )
-
-
-    if probabilities:
-
-
-        print(
-            "\nClass probabilities:"
-        )
-
-
-        for i, value in enumerate(probabilities):
-
-            print(
-                f"Class {i}: {value:.4f}"
-            )
 
 
     print(
-        "============================"
+
+        "Model:",
+
+        result.get(
+
+            "model"
+
+        )
+
     )
 
 
+    print(
 
-# =====================================================
-# Тестовый пример
-# =====================================================
+        "---------------------------------"
+
+    )
+
+# MAIN
+
 
 
 if __name__ == "__main__":
 
 
-    # Проверяем сервер
+    print(
 
-    check_server()
+        "Starting SOC ML Client..."
+
+    )
+
+
+    # 1. Проверяем сервер
 
 
 
-    # Пример сетевого потока CICIoT2023
+    server_available = check_server()
+
+
+    if not server_available:
+
+        exit()
+
+
+    # 2. Получаем информацию о модели
+
+
+
+    model_info = get_model_info()
+
+
+    if model_info is not None:
+
+
+        print(
+
+            "\n========== MODEL INFO =========="
+
+        )
+
+
+        print(
+
+            "Model:",
+
+            model_info.get(
+
+                "model_type"
+
+            )
+
+        )
+
+
+        print(
+
+            "Number of features:",
+
+            model_info.get(
+
+                "number_of_features"
+
+            )
+
+        )
+
+
+        print(
+
+            "Number of classes:",
+
+            model_info.get(
+
+                "number_of_classes"
+
+            )
+
+        )
+
+
+        print(
+
+            "-------------------------------------"
+
+        )
+
+
+    # ---------------------------------
+
+    # 3. Тестовый поток
+
+    # ---------------------------------
+
+
+    print(
+
+        "\nSending test network flow..."
+
+    )
+
+
+    # ВАЖНО:
+    #
+    # Здесь должно быть ровно столько
+    # признаков, сколько использовалось
+    # при обучении модели.
+    #
+    # И в том же порядке.
+
 
     test_flow = [
 
-        0.52,      # Flow Duration
+        0.52,
 
-        54,        # Header Length
+        54,
 
-        6,         # Protocol
+        6,
 
-        1200,      # Rate
+        1200,
 
-        450,       # Packet Size
+        450,
 
-        40,        # Packet Count
+        40,
 
-        0.002,     # IAT
+        0.002,
 
-        1,         # SYN flag
+        1,
 
-        0,         # ACK flag
+        0,
 
         0
 
     ]
 
 
+    # 4. Отправляем запрос
+
+
     result = predict_attack(
+
         test_flow
+
     )
 
 
+    # 5. Выводим результат
+
+
     print_result(
+
         result
+
     )
