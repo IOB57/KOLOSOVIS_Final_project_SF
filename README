@@ -89,9 +89,14 @@ CICIoT2023_ML_SOC_Project/
 │   ├── server.py
 │   └── client.py                
 │       
+├── pkl/
+│   ├── best_model.pkl
+│   ├── feture_names.pkl
+│   ├── label_encoder.pkl
+│   └── scaler.pkl   
+│       
 │
-│   
-│   
+│
 ├── EDA-final.ipynb
 │   
 ├── Final_diplom_model.ipynb
@@ -100,7 +105,7 @@ CICIoT2023_ML_SOC_Project/
 │
 ├── detector.py
 │
-│
+├── model_results.csv
 │
 │
 ├── requirements.txt
