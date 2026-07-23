@@ -101,9 +101,6 @@ CICIoT2023_ML_SOC_Project/
 ├── detector.py
 │
 │
-├── models/
-
-│   └── best_xgboost_model.pkl
 │
 │
 ├── requirements.txt
