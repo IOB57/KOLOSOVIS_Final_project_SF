@@ -87,6 +87,7 @@ CICIoT2023_ML_SOC_Project/
 ├── app/
 
 │   ├── server.py
+│    ├── detector.py
 │   └── client.py                
 │       
 ├── pkl/
@@ -102,8 +103,6 @@ CICIoT2023_ML_SOC_Project/
 ├── Final_diplom_model.ipynb
 │
 ├── data_model_diplom.rar
-│
-├── detector.py
 │
 ├── model_results.csv
 │
